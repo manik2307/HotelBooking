@@ -1,5 +1,8 @@
 package com.HotelBooking.HotelBooking.Entities;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,6 +27,21 @@ public class Booking {
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
+   @Column(nullable = false)
+    private Integer numberOfRooms;
+
     @Column(nullable = false)
-    private Integer roomNumber;
+    private LocalDate startDate; // Booking start date (date only)
+
+    @Column(nullable = false)
+    private LocalDate endDate; // Booking end date (date only)
+
+    @Column
+    private LocalDateTime checkInDate; // Date and time of check-in
+
+    @Column
+    private LocalDateTime checkOutDate; // Date and time of check-out
+
+    @Column
+    private Double extraCharge;
 }

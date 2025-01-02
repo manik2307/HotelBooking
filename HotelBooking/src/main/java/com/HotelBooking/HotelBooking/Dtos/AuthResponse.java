@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 public class AuthResponse {
- 
-
+    
 private final String message = "Success";
 }

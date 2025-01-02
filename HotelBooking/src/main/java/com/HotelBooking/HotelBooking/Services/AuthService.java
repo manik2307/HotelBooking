@@ -2,9 +2,9 @@ package com.HotelBooking.HotelBooking.Services;
 
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
+import com.HotelBooking.HotelBooking.Dtos.LoginData;
 import com.HotelBooking.HotelBooking.Dtos.RegisterData;
 import com.HotelBooking.HotelBooking.Entities.User;
 import com.HotelBooking.HotelBooking.Entities.Enum.Role;
@@ -16,8 +16,8 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
+    // @Autowired
+    // PasswordEncoder passwordEncoder;
 
     public AuthResponse register(RegisterData data) {
        //check if the user exists in the databse already then throw erorr
@@ -35,6 +35,10 @@ public class AuthService {
        // Save the user to the database
         userRepository.save(user);
         return AuthResponse.builder().build();
+    }
+
+    public AuthResponse login(LoginData loginData) {
+      return AuthResponse.builder().build();
     }
     
 }
