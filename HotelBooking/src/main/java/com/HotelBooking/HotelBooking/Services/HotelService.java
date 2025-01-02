@@ -61,7 +61,7 @@ private Hotel getHotelById(Long hotelId) {
 }
 
 // Update an existing hotel by ID
-public AuthResponse UpdateHotel(HotelData hotelData, Long hotelId) {
+public Hotel UpdateHotel(HotelData hotelData, Long hotelId) {
     // Step 1: Get the hotel by ID using the helper method.
     Hotel hotel = getHotelById(hotelId);
 
@@ -72,10 +72,7 @@ public AuthResponse UpdateHotel(HotelData hotelData, Long hotelId) {
     hotel.setAvailableRooms(hotelData.getAvailableRooms());
 
     // Step 3: Save the updated hotel entity.
-    hotelRepository.save(hotel);
-
-    // Step 4: Return a success response.
-    return AuthResponse.builder().build();
+    return hotelRepository.save(hotel);
 }
 
 // Delete a hotel by ID

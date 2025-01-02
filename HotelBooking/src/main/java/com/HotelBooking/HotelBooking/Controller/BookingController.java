@@ -1,5 +1,9 @@
 package com.HotelBooking.HotelBooking.Controller;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,33 +13,45 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
 import com.HotelBooking.HotelBooking.Dtos.BookingData;
+import com.HotelBooking.HotelBooking.Entities.Booking;
+import com.HotelBooking.HotelBooking.Services.BookingService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/bookings")
 public class BookingController {
-    //   @PostMapping("/{hotelId}/book")
-    // public ResponseEntity<?> bookRoom(@PathVariable Long hotelId, @RequestBody BookingData bookingData) {
-    //     // Implementation
-    // }
 
-    // @DeleteMapping("/{bookingId}")
-    // public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
-    //     // Implementation
-    // }
+    @Autowired
+    private BookingService bookingService;
+//this is an public endpoint and 
+//fro jwt i ahve to implement the user and delte the user from the booking data
+    @PostMapping("/{hotelId}/book")
+    public ResponseEntity<Booking> bookRoom(@PathVariable Long hotelId, @Valid@RequestBody BookingData bookingData) {
+        return ResponseEntity.ok(bookingService.BookRoom(hotelId,bookingData));
+    }
+//can be only accessed by manager or the user
+//in jwt we will remove the user id parameter in the path and take it from security context
+    @DeleteMapping("/{bookingId}/cancel/{userId}")
+    public ResponseEntity<AuthResponse> cancelBooking(@PathVariable Long bookingId,@PathVariable("userId") Long userId) {
+        return ResponseEntity.ok(bookingService.CancelBooking(bookingId,userId,LocalDate.now()));
+    }
+//this open for alll the user type but need authentication first
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<List<Booking>> getUserBookings(@PathVariable Long userId) {
+    return ResponseEntity.ok(bookingService.getUserBookings(userId));
+    }
+//this endpoint is open to the all the roles 
+//in jwt we will use the user id from the spring context
+    @PostMapping("/{bookingId}/check-in/{userId}")
+    public ResponseEntity<Booking> checkIn(@PathVariable("bookingId") Long Bookingid,@PathVariable("userId") Long UserId) {
+       return ResponseEntity.ok(bookingService.CheckIn(Bookingid,UserId));
+    }
 
-    // @GetMapping("/users/{userId}")
-    // public ResponseEntity<List<BookingData>> getUserBookings(@PathVariable Long userId) {
-    //     // Implementation
-    // }
-
-    // @PostMapping("/{id}/check-in")
-    // public ResponseEntity<?> checkIn(@PathVariable Long id) {
-    //     // Implementation
-    // }
-
-    // @PostMapping("/{id}/check-out")
-    // public ResponseEntity<?> checkOut(@PathVariable Long id) {
-    //     // Implementation
-    // }
+    @PostMapping("/{BookingId}/check-out/{userId}")
+    public ResponseEntity<String> checkOut(@PathVariable("BookingId") Long BookingId,@PathVariable("userId") Long userId) {
+     return ResponseEntity.ok(bookingService.CheckOut(BookingId,userId));
+    }
 }

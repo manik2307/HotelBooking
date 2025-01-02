@@ -11,7 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
+import lombok.Data;
+@Data
 @Entity
 @Table(name = "bookings")
 public class Booking {
@@ -43,5 +44,5 @@ public class Booking {
     private LocalDateTime checkOutDate; // Date and time of check-out
 
     @Column
-    private Double extraCharge;
+    private Double extraCharge=100.0;
 }

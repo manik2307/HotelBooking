@@ -45,7 +45,7 @@ public class HotelController {
     //put request for the hotel detail update and here id is of hotel
     //this end point open for HotelManager,Admin
     @PutMapping("/{hotelId}")
-    public ResponseEntity<AuthResponse> UpdateHotel(@Valid @RequestBody HotelData hotelData,@PathVariable("hotelId")  Long id)
+    public ResponseEntity<Hotel> UpdateHotel(@Valid @RequestBody HotelData hotelData,@PathVariable("hotelId")  Long id)
     {
        return ResponseEntity.ok(hotelService.UpdateHotel(hotelData,id));
     }
