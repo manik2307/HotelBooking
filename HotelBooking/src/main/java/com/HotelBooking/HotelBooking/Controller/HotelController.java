@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
 import com.HotelBooking.HotelBooking.Dtos.HotelData;
@@ -32,14 +31,6 @@ public class HotelController {
     public ResponseEntity<Hotel> CreateHotel(@Valid @RequestBody HotelData hoteldata)
     {
        return ResponseEntity.ok(hotelService.CreateHotel(hoteldata));
-    }
-
-    //get request for the hotels to return all the hotels details
-    //this endpoint is public and open to all 
-    @GetMapping
-    public ResponseEntity<List<Hotel>> getAllHotels()
-    {
-         return ResponseEntity.ok(hotelService.getAllHotels()); 
     }
 
     //put request for the hotel detail update and here id is of hotel

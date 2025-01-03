@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
 import com.HotelBooking.HotelBooking.Dtos.BookingData;
 import com.HotelBooking.HotelBooking.Entities.Booking;
+import com.HotelBooking.HotelBooking.Entities.Hotel;
 import com.HotelBooking.HotelBooking.Services.BookingService;
+import com.HotelBooking.HotelBooking.Services.HotelService;
 
 import jakarta.validation.Valid;
 
@@ -26,11 +28,20 @@ public class BookingController {
 
     @Autowired
     private BookingService bookingService;
+    @Autowired
+    private HotelService hotelService;
 //this is an public endpoint and 
 //fro jwt i ahve to implement the user and delte the user from the booking data
-    @PostMapping("/{hotelId}/book")
-    public ResponseEntity<Booking> bookRoom(@PathVariable Long hotelId, @Valid@RequestBody BookingData bookingData) {
+    @PostMapping("/hotels/{hotelId}/book")
+    public ResponseEntity<Booking> bookRoom(@PathVariable Long hotelId, @Valid @RequestBody BookingData bookingData) {
         return ResponseEntity.ok(bookingService.BookRoom(hotelId,bookingData));
+    }
+     //get request for the hotels to return all the hotels details
+    //this endpoint is public and open to all 
+    @GetMapping("/hotels")
+    public ResponseEntity<List<Hotel>> getAllHotels()
+    {
+         return ResponseEntity.ok(hotelService.getAllHotels()); 
     }
 //can be only accessed by manager or the user
 //in jwt we will remove the user id parameter in the path and take it from security context
