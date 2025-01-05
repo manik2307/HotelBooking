@@ -1,6 +1,8 @@
 // package com.HotelBooking.HotelBooking.ControllerTest;
 
 // import org.junit.jupiter.api.Test;
+// import org.mockito.InjectMocks;
+// import org.mockito.Mock;
 // import org.mockito.Mockito;
 // import org.springframework.beans.factory.annotation.Autowired;
 // import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,33 +26,39 @@
 //     @Autowired
 //     private MockMvc mockMvc;
 
-//     @MockBean
-//     private HotelService hotelService;
+//       @Mock
+//     private HotelService hotelService; // Mock the HotelService
+
+//     @InjectMocks
+//     private HotelController hotelController; 
 
 //     @Autowired
 //     private ObjectMapper objectMapper;
 
 //     // Test Case 1: Create Hotel - Success
 //     @Test
-//      @WithMockUser(username = "testuser", roles = {"ADMIN"})
+//     @WithMockUser(roles = "ADMIN") // Mock the ADMIN role
 //     void createHotel_Success() throws Exception {
+//         // Create test data for Hotel
 //         HotelData hotelData = new HotelData();
 //         hotelData.setName("Hotel Paradise");
 //         hotelData.setLocation("123 Main Street");
 //         hotelData.setDescription("Luxury hotel");
 //         hotelData.setAvailableRooms(10);
-       
+    
 //         Hotel hotel = new Hotel();
 //         // Mock the service method
 //         Mockito.when(hotelService.CreateHotel(Mockito.any(HotelData.class)))
 //                .thenReturn(hotel); // Return a new hotel entity for the test
-
+    
+//         // Perform POST request
 //         mockMvc.perform(post("/hotels")
 //                         .contentType(MediaType.APPLICATION_JSON)
 //                         .content(objectMapper.writeValueAsString(hotelData)))
-//                 .andExpect(status().isOk())
-//                 .andExpect(content().json(objectMapper.writeValueAsString(hotel)));
+//                 .andExpect(status().isCreated()) // HTTP 201
+//                 .andExpect(content().json(objectMapper.writeValueAsString(hotel))); // Expect the returned hotel in response
 //     }
+    
 
 //     // Test Case 2: Create Hotel - Validation Error (Missing Name)
 //     @Test

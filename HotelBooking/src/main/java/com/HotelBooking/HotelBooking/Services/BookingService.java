@@ -76,38 +76,44 @@ public class BookingService {
         }
         throw new SecurityException("User not authenticated");
     }
+
     // Method to book the room
-    public BookingResponse BookRoom(Long hotelId,Long UserId, BookingData bookingData) {
-      // Step 1: Validate Hotel
-    Hotel hotel = hotelRepository.findById(hotelId)
-            .orElseThrow(() -> new IllegalArgumentException("Hotel not found with ID: " + hotelId));
-
-    // Step 2: Validate User
-    User user = validateUser(UserId);
-
-    // Step 3: Check Room Availability
-    if (hotel.getAvailableRooms() < bookingData.getNumberOfRooms()) {
-        throw new IllegalStateException("Not enough rooms available.");
+    public BookingResponse BookRoom(Long hotelId, Long userId, BookingData bookingData) {
+        // Step 1: Validate Hotel
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new IllegalArgumentException("Hotel not found with ID: " + hotelId));
+        // Step 2: Validate User
+        User user = validateUser(userId);
+        // Step 3: Validate Booking Dates
+        LocalDate today = LocalDate.now();
+        // Ensure startDate is not in the past
+        if (bookingData.getStartDate().isBefore(today)) {
+            throw new IllegalArgumentException("Start date cannot be in the past.");
+        }
+        // Ensure endDate is after startDate
+        if (bookingData.getEndDate().isBefore(bookingData.getStartDate())) {
+            throw new IllegalArgumentException("End date cannot be before start date.");
+        }
+        // Step 4: Check Room Availability
+        if (hotel.getAvailableRooms() < bookingData.getNumberOfRooms()) {
+            throw new IllegalStateException("Not enough rooms available.");
+        }
+        // Step 5: Update Room Availability
+        hotel.setAvailableRooms(hotel.getAvailableRooms() - bookingData.getNumberOfRooms());
+        hotelRepository.save(hotel);
+        // Step 6: Create Booking Entity
+        Booking booking = new Booking();
+        booking.setHotel(hotel);
+        booking.setCustomer(user);
+        booking.setNumberOfRooms(bookingData.getNumberOfRooms());
+        booking.setStartDate(bookingData.getStartDate());
+        booking.setEndDate(bookingData.getEndDate());
+        // Step 7: Save Booking
+        Booking savedBooking = bookingRepository.save(booking);
+        // Step 8: Return BookingResponse DTO
+        return new BookingResponse(savedBooking.getId(), hotelId);
     }
-
-    // Step 4: Update Room Availability
-    hotel.setAvailableRooms(hotel.getAvailableRooms() - bookingData.getNumberOfRooms());
-    hotelRepository.save(hotel);
-
-    // Step 5: Create Booking Entity
-    Booking booking = new Booking();
-    booking.setHotel(hotel);
-    booking.setCustomer(user);
-    booking.setNumberOfRooms(bookingData.getNumberOfRooms());
-    booking.setStartDate(bookingData.getStartDate());
-    booking.setEndDate(bookingData.getEndDate());
-
-    // Step 6: Save Booking
-    Booking savedBooking = bookingRepository.save(booking);
-
-    // Step 7: Return BookingResponse DTO
-    return new BookingResponse(savedBooking.getId(), hotelId);
-    }
+    
 
     // Method to cancel the booking
     public AuthResponse CancelBooking(Long bookingId, Long userId, LocalDate cancellationDate) {
