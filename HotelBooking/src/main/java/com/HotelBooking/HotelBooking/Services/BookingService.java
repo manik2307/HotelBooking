@@ -7,13 +7,19 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
 import com.HotelBooking.HotelBooking.Dtos.BookingData;
+import com.HotelBooking.HotelBooking.Dtos.BookingResponse;
 import com.HotelBooking.HotelBooking.Entities.Booking;
 import com.HotelBooking.HotelBooking.Entities.Hotel;
 import com.HotelBooking.HotelBooking.Entities.User;
+import com.HotelBooking.HotelBooking.Entities.Enum.Role;
 import com.HotelBooking.HotelBooking.Repositories.BookingRepository;
 import com.HotelBooking.HotelBooking.Repositories.HotelRepository;
 import com.HotelBooking.HotelBooking.Repositories.UserRepository;
@@ -53,44 +59,65 @@ public class BookingService {
         double extraChargePerHour = booking.getExtraCharge() != null ? booking.getExtraCharge() : 100.0;
         return hoursStayed * extraChargePerHour;
     }
-
-    // Method to book the room
-    public Booking BookRoom(Long hotelId, BookingData bookingData) {
-        // Step 1: Validate Hotel
-        Hotel hotel = hotelRepository.findById(hotelId)
-                .orElseThrow(() -> new IllegalArgumentException("Hotel not found with ID: " + hotelId));
-
-        // Step 2: Validate User
-        User user = validateUser(bookingData.getUserId());
-
-        // Step 3: Check Room Availability
-        if (hotel.getAvailableRooms() < bookingData.getNumberOfRooms()) {
-            throw new IllegalStateException("Not enough rooms available.");
+    private boolean isUserHotelManager(Long userId) {
+        User user = validateUser(userId); // Assuming `validateUser` fetches the user entity
+        return user.getRole() == Role.HOTEL_MANAGER; // Replace Role.HOTEL_MANAGER with your actual role representation
+    }
+     
+        public Long getAuthenticatedUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            // Assuming the user details are stored in the authentication principal as username (which is the userId)
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+          //  String email=userDetails.getUsername(); // Or modify based on your username format
+            User user = userRepository.findByEmail(userDetails.getUsername())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userDetails.getUsername()));
+        return user.getId(); 
         }
+        throw new SecurityException("User not authenticated");
+    }
+    // Method to book the room
+    public BookingResponse BookRoom(Long hotelId,Long UserId, BookingData bookingData) {
+      // Step 1: Validate Hotel
+    Hotel hotel = hotelRepository.findById(hotelId)
+            .orElseThrow(() -> new IllegalArgumentException("Hotel not found with ID: " + hotelId));
 
-        // Step 4: Update Room Availability
-        hotel.setAvailableRooms(hotel.getAvailableRooms() - bookingData.getNumberOfRooms());
-        hotelRepository.save(hotel);
+    // Step 2: Validate User
+    User user = validateUser(UserId);
 
-        // Step 5: Create Booking Entity
-        Booking booking = new Booking();
-        booking.setHotel(hotel);
-        booking.setCustomer(user);
-        booking.setNumberOfRooms(bookingData.getNumberOfRooms());
-        booking.setStartDate(bookingData.getStartDate());
-        booking.setEndDate(bookingData.getEndDate());
+    // Step 3: Check Room Availability
+    if (hotel.getAvailableRooms() < bookingData.getNumberOfRooms()) {
+        throw new IllegalStateException("Not enough rooms available.");
+    }
 
-        // Step 6: Save and Return Booking
-        return bookingRepository.save(booking);
+    // Step 4: Update Room Availability
+    hotel.setAvailableRooms(hotel.getAvailableRooms() - bookingData.getNumberOfRooms());
+    hotelRepository.save(hotel);
+
+    // Step 5: Create Booking Entity
+    Booking booking = new Booking();
+    booking.setHotel(hotel);
+    booking.setCustomer(user);
+    booking.setNumberOfRooms(bookingData.getNumberOfRooms());
+    booking.setStartDate(bookingData.getStartDate());
+    booking.setEndDate(bookingData.getEndDate());
+
+    // Step 6: Save Booking
+    Booking savedBooking = bookingRepository.save(booking);
+
+    // Step 7: Return BookingResponse DTO
+    return new BookingResponse(savedBooking.getId(), hotelId);
     }
 
     // Method to cancel the booking
     public AuthResponse CancelBooking(Long bookingId, Long userId, LocalDate cancellationDate) {
         Booking booking = validateBookingOwnership(bookingId, userId);
 
-        // Check if the cancellation date is before the start date
-        if (!cancellationDate.isBefore(booking.getStartDate())) {
-            throw new IllegalStateException("Cancellation is only allowed before the start date of the booking.");
+        if (!isUserHotelManager(userId)) {
+            // For customers, ensure cancellation date is before the start date
+            if (!cancellationDate.isBefore(booking.getStartDate())) {
+                throw new IllegalStateException("Cancellation is only allowed before the start date of the booking.");
+            }
         }
 
         // Process cancellation (e.g., remove booking, update room availability)
@@ -103,13 +130,18 @@ public class BookingService {
     }
 
     // Method to get user bookings
-    public List<Booking> getUserBookings(Long userId) {
+    public List<BookingResponse> getUserBookings(Long userId) {
         User user = validateUser(userId);
-        return bookingRepository.findByCustomer(user);
+        List<Booking> userBookings = bookingRepository.findByCustomer(user);
+
+        // Step 3: Convert Bookings to BookingResponse DTOs
+        return userBookings.stream()
+                .map(booking -> new BookingResponse(booking.getId(), booking.getHotel().getId()))
+                .toList();
     }
 
     // Method to check-in
-    public Booking CheckIn(Long bookingId, Long userId) {
+    public AuthResponse CheckIn(Long bookingId, Long userId) {
         Booking booking = validateBookingOwnership(bookingId, userId);
 
         // Step 3: Check if the current time is within the booking period (between startDate and endDate)
@@ -121,7 +153,7 @@ public class BookingService {
         // Step 4: Update the checkInDate attribute of the booking
         booking.setCheckInDate(currentTime);
         bookingRepository.save(booking);  // Save the updated booking
-        return booking;
+        return AuthResponse.builder().build();
     }
 
     // Method to check-out
@@ -144,7 +176,7 @@ public class BookingService {
             booking.setCheckOutDate(currentTime); // Set the check-out date and time
             bookingRepository.save(booking);  // Save the updated booking
 
-            return "You have overstayed by " + extraCharge + " hours. Extra charges of " + extraCharge + " have been applied. You have successfully checked out. Please visit again!";
+            return "You have overstayed. Extra charges of " + extraCharge + " have been applied. You have successfully checked out. Please visit again!";
         }
 
         // If the current time is within the booking period, proceed with checkout without extra charges
@@ -152,5 +184,17 @@ public class BookingService {
         bookingRepository.save(booking);  // Save the updated booking
 
         return "You have successfully checked out. Please visit again!";
+    }
+
+    public AuthResponse CancelBookingByManager(Long bookingId) {
+        Booking booking=bookingRepository.getById(bookingId);
+       
+        // Process cancellation (e.g., remove booking, update room availability)
+        Hotel hotel = booking.getHotel();
+        hotel.setAvailableRooms(hotel.getAvailableRooms() + 1);
+        hotelRepository.save(hotel);
+        bookingRepository.delete(booking);
+
+        return AuthResponse.builder().build();
     }
 }

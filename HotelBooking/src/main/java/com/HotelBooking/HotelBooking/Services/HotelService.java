@@ -76,7 +76,7 @@ public Hotel UpdateHotel(HotelData hotelData, Long hotelId) {
 }
 
 // Delete a hotel by ID
-public AuthResponse DeleteHotel(Long id) {
+public void DeleteHotel(Long id) {
     // Step 1: Get the hotel by ID using the helper method.
     Hotel hotel = getHotelById(id);
 
@@ -84,7 +84,7 @@ public AuthResponse DeleteHotel(Long id) {
     hotelRepository.deleteById(id);
 
     // Step 3: Return a success response.
-    return AuthResponse.builder().build();
+    return;
 }
     
 }

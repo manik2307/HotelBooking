@@ -3,9 +3,10 @@ package com.HotelBooking.HotelBooking.Controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,15 +27,16 @@ public class HotelController {
     private HotelService hotelService;
 
     //post for creating an hotel
-    //this endpoint is only for admin 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Hotel> CreateHotel(@Valid @RequestBody HotelData hoteldata)
     {
-       return ResponseEntity.ok(hotelService.CreateHotel(hoteldata));
+       Hotel hotel=hotelService.CreateHotel(hoteldata);
+       return ResponseEntity.status(HttpStatus.CREATED).body(hotel);
     }
 
     //put request for the hotel detail update and here id is of hotel
-    //this end point open for HotelManager,Admin
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HOTEL_MANAGER')")
     @PutMapping("/{hotelId}")
     public ResponseEntity<Hotel> UpdateHotel(@Valid @RequestBody HotelData hotelData,@PathVariable("hotelId")  Long id)
     {
@@ -42,12 +44,12 @@ public class HotelController {
     }
 
     //delete request for the hotels by passing the hotel id in the url ex: /hotels/2 (here 2 is id)
-    //this end point is only for admin
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{hotelId}")
     public ResponseEntity<AuthResponse> DeleteHotel(@PathVariable("hotelId")  Long id)
     {
-        return ResponseEntity.ok(hotelService.DeleteHotel(id));
+       hotelService.DeleteHotel(id);
+       return ResponseEntity.noContent().build();
     }
-    //in future we can build endpoint to see all the bookings of the hotel
-    //ex:GET /hotels/{hotelId}/bookings by making this request
+    
 }
