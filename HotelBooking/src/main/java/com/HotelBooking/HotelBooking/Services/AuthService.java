@@ -2,14 +2,12 @@ package com.HotelBooking.HotelBooking.Services;
 
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Authentication;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.HotelBooking.HotelBooking.Dtos.Auth;
-import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
 import com.HotelBooking.HotelBooking.Dtos.LoginData;
 import com.HotelBooking.HotelBooking.Dtos.RegisterData;
 import com.HotelBooking.HotelBooking.Entities.User;
@@ -55,6 +53,10 @@ public class AuthService {
     }
 
     public Auth login(LoginData request) {
+         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
+            throw new RuntimeException("User with this email already exists!");
+        }
       authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),

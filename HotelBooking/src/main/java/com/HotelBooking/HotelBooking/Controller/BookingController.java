@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.HotelBooking.HotelBooking.Dtos.AuthResponse;
 import com.HotelBooking.HotelBooking.Dtos.BookingData;
 import com.HotelBooking.HotelBooking.Dtos.BookingResponse;
-import com.HotelBooking.HotelBooking.Entities.Booking;
 import com.HotelBooking.HotelBooking.Entities.Hotel;
 import com.HotelBooking.HotelBooking.Services.BookingService;
 import com.HotelBooking.HotelBooking.Services.HotelService;
@@ -50,13 +48,13 @@ public class BookingController {
          return ResponseEntity.ok(hotelService.getAllHotels()); 
     }
     
-
+    //used to delete any booking 
     @DeleteMapping("/{bookingId}/cancel")
     public ResponseEntity<AuthResponse> cancelBooking(@PathVariable("bookingId") Long bookingId) {
         Long userId = bookingService.getAuthenticatedUserId();
         return ResponseEntity.ok(bookingService.CancelBooking(bookingId,userId,LocalDate.now()));
     }
-
+   //get the booking details of the user that have booked something 
     @GetMapping("/users")
     public ResponseEntity<List<BookingResponse>> getUserBookings() {
     Long userId = bookingService.getAuthenticatedUserId(); 
