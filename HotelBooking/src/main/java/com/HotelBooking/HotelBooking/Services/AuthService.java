@@ -54,8 +54,8 @@ public class AuthService {
 
     public Auth login(LoginData request) {
          Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-        if (existingUser.isPresent()) {
-            throw new RuntimeException("User with this email already exists!");
+        if (!existingUser.isPresent()) {
+            throw new RuntimeException("User with this email does not exists!");
         }
       authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -67,5 +67,20 @@ public class AuthService {
                 .accessToken(jwtToken)
                 .build();
     }
-    
+    public User processOAuthPostLogin(String email, String firstName, String lastName) {
+    return userRepository.findByEmail(email).orElseGet(() -> {
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(firstName != null ? firstName : "Unknown");
+        user.setLastName(lastName != null ? lastName : "User");
+        user.setRole(Role.CUSTOMER);
+        user.setPassword(""); 
+        return userRepository.save(user);
+    });
+}
+
+public String generateTokenForUser(User user) {
+    return jwtService.generateToken(user);
+}
+
 }

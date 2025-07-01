@@ -1,6 +1,9 @@
 package com.HotelBooking.HotelBooking.Security;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,7 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Configuration
 @EnableWebMvc
@@ -28,6 +33,12 @@ public class SecurityConfig {
     @Autowired
     JWTAuthenticationFilter jwtAuthenticationFilter;
 
+   @Value("${spring.security.oauth2.client.provider.okta.issuer-uri}")
+private String issuer;
+
+@Value("${spring.security.oauth2.client.registration.okta.client-id}")
+private String clientId;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -36,20 +47,48 @@ public class SecurityConfig {
         http.authenticationProvider(authenticationProvider());
 
         http.authorizeHttpRequests(configurer -> configurer
-        .requestMatchers("/auth/login", "/auth/register","/bookings/hotels")
-        .permitAll()
-        .anyRequest()
-        .authenticated());
-        
-        // Do not save the state, instead authenticate with token
-        http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            .requestMatchers("/", "/auth/login", "/auth/register", "/auth/form-login", "/bookings/hotels", "/oauth2/**", "/register")
+            .permitAll()
+            .anyRequest()
+            .authenticated());
 
-        //Invoke JWT before the traditionational authentication
+        http.oauth2Login(oauth -> oauth.defaultSuccessUrl("/oauth2/success", true));
+        http.logout(logout -> logout
+            .logoutSuccessUrl("/")
+            .invalidateHttpSession(true)
+            .clearAuthentication(true)
+            .deleteCookies("JSESSIONID")
+            .addLogoutHandler(logoutHandler()) // <-- Okta logout handler
+        );
+        http.sessionManagement(configure -> configure.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+
+        // Invoke JWT before the traditional authentication
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // private LogoutHandler logoutHandler() {
+    //     return (request, response, authentication) -> {
+    //         try {
+    //             String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+    //             response.sendRedirect(issuer + "v2/logout?client_id=" + clientId + "&returnTo=" + baseUrl);
+    //         } catch (IOException e) {
+    //             throw new RuntimeException(e);
+    //         }
+    //     };
+    // }
+private LogoutHandler logoutHandler() {
+    return (request, response, authentication) -> {
+        try {
+            String baseUrl = request.getScheme() + "://" + request.getServerName()
+                    + (request.getServerPort() == 80 || request.getServerPort() == 443 ? "" : ":" + request.getServerPort());
+            response.sendRedirect(issuer + "v2/logout?client_id=" + clientId + "&returnTo=" + baseUrl);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    };
+}
     @Bean
     AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
@@ -67,5 +106,4 @@ public class SecurityConfig {
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
