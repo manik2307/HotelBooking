@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,17 +21,18 @@ import com.HotelBooking.HotelBooking.Services.AuthService;
 
 import jakarta.validation.Valid;
 
-@RestController
+@Controller
 @RequestMapping("/auth")
 public class AuthController {
    @Autowired
     private AuthService authservice;
 
     @PostMapping("/register")
-    public ResponseEntity<Auth> register(@Valid @RequestBody RegisterData data)
+    public String register(@Valid @ModelAttribute RegisterData data)
     {
         Auth a=authservice.register(data);
-        return ResponseEntity.status(HttpStatus.CREATED).body(a);
+        return "redirect:/";
+        //return ResponseEntity.status(HttpStatus.CREATED).body(a);
     }
 
     @PostMapping(value = "/login", consumes = "application/x-www-form-urlencoded")
@@ -41,8 +44,8 @@ public class AuthController {
         return ResponseEntity.ok("Hello, you are authenticated!");
     }   
 
-    @PostMapping("/form-login")
-    public String formLogin(@RequestParam String email, @RequestParam String password, Model model) {
+@PostMapping("/form-login")
+public String formLogin(@RequestParam String email, @RequestParam String password, Model model) {
     LoginData loginData = new LoginData(email, password);
     try {
         authservice.login(loginData); // This will throw if credentials are wrong

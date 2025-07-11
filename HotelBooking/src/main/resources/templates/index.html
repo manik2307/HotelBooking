@@ -73,14 +73,47 @@
             </form>
             <div class="text-center my-3">or</div>
             <a class="btn btn-outline-primary w-100 mb-2" th:href="@{/oauth2/authorization/okta}">Login with Okta</a>
-            <a class="btn btn-link w-100" th:href="@{/register}">Register a new account</a>
+            <!-- Change this link to a button that opens the register modal -->
+            <button class="btn btn-link w-100" type="button" data-bs-toggle="modal" data-bs-target="#registerModal">
+                Register a new account
+            </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Registration Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form th:action="@{/auth/register}" method="post">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="registerModalLabel">Register</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="text" name="firstName" class="form-control mb-2" placeholder="First Name" required>
+              <input type="text" name="lastName" class="form-control mb-2" placeholder="Last Name" required>
+              <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+              <input type="password" name="password" class="form-control mb-2" placeholder="Password" required>
+              <!-- Optionally add role selection if needed -->
+              <!-- <select name="role" class="form-control mb-2">
+                <option value="USER">User</option>
+                <option value="ADMIN">Admin</option>
+              </select> -->
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Register</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Show modal automatically if loginError is present -->
     <script th:if="${loginError != null}">
         var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
         loginModal.show();
     </script>
 </body>
+</html>
